@@ -36,7 +36,7 @@ fun CatalogScreen(
             items(Categories.all) { c ->
                 val selected = c == category
                 val color by animateColorAsState(
-                    targetValue = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                    targetValue = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
                     animationSpec = tween(300)
                 )
                 Button(
