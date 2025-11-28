@@ -15,7 +15,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-// Repo fake para androidTest: no usa red, solo datos locales
 class AndroidTestFakeProductRepository : ProductRepository() {
     override suspend fun getProducts(): List<Product> {
         return listOf(
@@ -57,7 +56,6 @@ class CatalogScreenTest {
             }
         }
 
-        //Ver que aparezca el nombre en la pantalla
         composeRule
             .onNodeWithText("Manzanas Fuji")
             .assertIsDisplayed()
