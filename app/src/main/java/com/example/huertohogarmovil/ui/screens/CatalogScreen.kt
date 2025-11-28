@@ -25,8 +25,10 @@ fun CatalogScreen(
     cartVM: CartViewModel
 ) {
     val category by catalogVM.category.collectAsState()
+    val state by catalogVM.uiState.collectAsState()
 
     Column(Modifier.fillMaxSize().padding(12.dp)) {
+
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
@@ -48,7 +50,16 @@ fun CatalogScreen(
 
         Spacer(Modifier.height(8.dp))
 
+        if (state.isLoading) {
+            Text("Cargando productos...")
+        }
+
+        state.errorMessage?.let {
+            Text("Error: $it", color = MaterialTheme.colorScheme.error)
+        }
+
         val products = catalogVM.productsFor(category)
+
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(products, key = { it.code }) { p ->
                 ProductItem(p) { cartVM.add(p.code, p.name, p.price) }

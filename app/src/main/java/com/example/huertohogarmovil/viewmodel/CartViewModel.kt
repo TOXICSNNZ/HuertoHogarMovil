@@ -1,88 +1,65 @@
 package com.example.huertohogarmovil.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
-import com.example.huertohogarmovil.data.repository.CartRepository
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+data class CartItemUi(
+    val id: Int,
+    val productCode: String,
+    val name: String,
+    val unitPrice: Int,
+    val quantity: Int
+)
 
 data class CartUiState(
-    val items: List<com.example.huertohogarmovil.data.local.CartItem> = emptyList(),
+    val items: List<CartItemUi> = emptyList(),
     val total: Int = 0
 )
 
-class CartViewModel(private val repo: CartRepository) : ViewModel() {
+class CartViewModel : ViewModel() {
 
-    val state = repo.observeCart()
-        .map { list -> CartUiState(list, list.sumOf { it.unitPrice * it.quantity }) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), CartUiState())
+    private val _state = MutableStateFlow(CartUiState())
+    val state: StateFlow<CartUiState> = _state.asStateFlow()
+
+    private var nextId = 1
 
     fun add(code: String, name: String, price: Int) {
-        viewModelScope.launch { repo.addOne(code, name, price) }
-    }
-    fun remove(id: Int) {
-        viewModelScope.launch { repo.remove(id) }
-    }
-    fun clear() {
-        viewModelScope.launch { repo.clear() }
-    }
-}
+        val current = _state.value
+        val existing = current.items.find { it.productCode == code }
 
-class CartViewModelFactory(private val repo: CartRepository) : ViewModelProvider.Factory {
-    override fun <T: ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(CartViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return CartViewModel(repo) as T
+        val newItems = if (existing != null) {
+            current.items.map {
+                if (it.productCode == code) it.copy(quantity = it.quantity + 1) else it
+            }
+        } else {
+            current.items + CartItemUi(
+                id = nextId++,
+                productCode = code,
+                name = name,
+                unitPrice = price,
+                quantity = 1
+            )
         }
-        throw IllegalArgumentException("Unknown Viewmodel class")
+
+        _state.value = CartUiState(
+            items = newItems,
+            total = newItems.sumOf { it.unitPrice * it.quantity }
+        )
     }
+
+    fun remove(id: Int) {
+        val newItems = _state.value.items.filterNot { it.id == id }
+        _state.value = CartUiState(
+            items = newItems,
+            total = newItems.sumOf { it.unitPrice * it.quantity }
+        )
+    }
+
+    fun clear() {
+        _state.value = CartUiState()
+    }
+
+
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

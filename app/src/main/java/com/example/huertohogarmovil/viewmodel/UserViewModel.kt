@@ -1,30 +1,38 @@
 package com.example.huertohogarmovil.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
-import com.example.huertohogarmovil.data.local.User
-import com.example.huertohogarmovil.data.repository.UserRepository
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
-class UserViewModel(private val repository: UserRepository) : ViewModel() {
-    val currentUser = repository.observeUser().stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+data class UserUi(
+    val name: String,
+    val email: String,
+    val password: String,
+    val address: String,
+    val photoUri: String? = null
+)
 
-    fun saveUser(name: String, email: String, pass: String, address: String, photoUri: String? = null) {
-        viewModelScope.launch {
-            repository.save(User(name = name, email = email, password = pass, address = address, photoUri = photoUri))
-        }
+class UserViewModel : ViewModel() {
+
+    private val _currentUser = MutableStateFlow<UserUi?>(null)
+    val currentUser: StateFlow<UserUi?> = _currentUser.asStateFlow()
+
+    fun saveUser(
+        name: String,
+        email: String,
+        pass: String,
+        address: String,
+        photoUri: String? = null
+    ) {
+        _currentUser.value = UserUi(
+            name = name,
+            email = email,
+            password = pass,
+            address = address,
+            photoUri = photoUri
+        )
     }
-}
 
-class UserViewModelFactory(private val repository: UserRepository) : ViewModelProvider.Factory {
-    override fun <T: ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(UserViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return UserViewModel(repository) as T
-        }
-        throw IllegalArgumentException("Unknown Viewmodel class")
-    }
+
 }
